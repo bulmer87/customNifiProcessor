@@ -1,0 +1,56 @@
+//you can consider this file the root "buildscript" for the entire project
+//top level build file where you can add configuration options to all sub projects
+
+//this is the buildscript method and is available to all subprojects (modules) with a multi module project
+//This modifies the gradle buildscript dependencies not the binaries created by it
+buildscript {
+    //why is this commented out? It can be specified in the setting.gradle file.
+    //it can be included in the settings.gradle file in the pluginManagement closure
+    /*repositories {
+        maven {
+            url 'http://dl.bintray.com/sponiro/gradle-plugins'
+        }
+    }*/
+    dependencies {
+        //it would seem that with the runtimeOnly dependency signifier that should work but for some reason
+        //this is only for dependencies block within the buildscipt
+        //I believe this is a plugin that is a dependency
+        //this is applying the jar or plugin to the buildscript itself aka like importing something to the
+        //actual gradle build script class path NOT your binaries created by the build script
+        classpath group: 'de.fanero.gradle.plugin.nar', name: 'gradle-nar-plugin', version: "${narPluginVersion}"
+    }
+}
+
+plugins {
+    id 'java'
+}
+//apply a plugin allows you to add new tasks (like this will add the nar build task)
+//or configure sensible defaults ....
+//there are 2 steps to resolving a plugin first to find it and then to apply it to the project
+//Resolving a plugin means finding the correct version of the jar which contains a given plugin and adding it the script classpath.
+//Apply in shot apply it to the project calling the apply(T) in gradle on the plugin to use what you need out of it.
+//in this case the nar task to build nar files and the correct manifest
+//This is the form of the non gradle plugin id that is the fully qualified form
+apply plugin: 'de.fanero.gradle.plugin.nar'
+
+repositories {
+    //This is to define a repo other than mavenCentral or a well know repo
+    //This is for a remote repo
+    maven{
+        url 'http://dl.bintray.com/sponiro/gradle-plugins'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.apache.nifi:nifi-api:1.11.3'
+    compile 'org.apache.nifi:nifi-processor-utils:1.11.3'
+    //at the root level the nar dependency is stated below
+    //the root nar needs to always be dependent on the standard services
+    nar 'org.apache.nifi:nifi-standard-services-api-nar:1.11.3'
+    testCompileOnly group: 'junit', name: 'junit', version: '4.12'
+}
+
+group 'org.brandon.nifi.test'
+version '1.0-SNAPSHOT'
+sourceCompatibility = 1.8
