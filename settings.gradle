@@ -1,9 +1,10 @@
 pluginManagement{
     repositories{
-        maven{
+        maven {
             url 'http://dl.bintray.com/sponiro/gradle-plugins'
         }
     }
 }
 rootProject.name = 'CustomNifi'
+
 

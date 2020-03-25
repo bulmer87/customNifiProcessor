@@ -36,19 +36,30 @@ apply plugin: 'de.fanero.gradle.plugin.nar'
 repositories {
     //This is to define a repo other than mavenCentral or a well know repo
     //This is for a remote repo
-    maven{
-        url 'http://dl.bintray.com/sponiro/gradle-plugins'
-    }
     mavenCentral()
 }
 
+//The dependencies of the actual code you are building not the buildscript itself
 dependencies {
+    //jaxb
+    compileOnly fileTree("${jaxbHome}")
+
+    //nifi
     compile 'org.apache.nifi:nifi-api:1.11.3'
     compile 'org.apache.nifi:nifi-processor-utils:1.11.3'
+    implementation 'org.apache.nifi:nifi-ssl-context-service-api:1.11.3'
     //at the root level the nar dependency is stated below
     //the root nar needs to always be dependent on the standard services
     nar 'org.apache.nifi:nifi-standard-services-api-nar:1.11.3'
+
+    //test
     testCompileOnly group: 'junit', name: 'junit', version: '4.12'
+    implementation 'org.jetbrains:annotations:15.0'
+}
+//a custom task to copy a directory or file into another dir. This destination does not have to be existent
+task copy(type: Copy, group: "Custom", description: "Copies the nar file crated into the lib dir of nifi"){
+    from "build/libs/CustomNifi-1.0-SNAPSHOT.jar"
+    into "${nifiHome}/lib"
 }
 
 group 'org.brandon.nifi.test'
