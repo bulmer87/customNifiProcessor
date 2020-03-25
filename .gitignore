@@ -4,4 +4,4 @@
 # Ignore Gradle build output directory
 build
 gradle/
-
+stale_outputs_checked
