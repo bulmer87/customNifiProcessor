@@ -44,6 +44,9 @@ dependencies {
     //jaxb
     compileOnly fileTree("${jaxbHome}")
 
+    //httpPost for jaxb class binding
+    compileOnly fileTree("${httpPostHome}")
+
     //nifi
     compile 'org.apache.nifi:nifi-api:1.11.3'
     compile 'org.apache.nifi:nifi-processor-utils:1.11.3'
