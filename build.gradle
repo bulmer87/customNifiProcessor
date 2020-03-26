@@ -61,14 +61,17 @@ dependencies {
     testCompileOnly group: 'junit', name: 'junit', version: '4.12'
     implementation 'org.jetbrains:annotations:15.0'
 }
-//a custom task to copy a directory or file into another dir. This destination does not have to be existent
-task copy(type: Copy, group: "Custom", description: "Copies the nar file crated into the lib dir of nifi"){
-    //ok 2 birds one stone make it depend on nar so that it will build it all and then copy into delivery dir
-    dependsOn nar
-    from "build/libs/CustomNifi-1.0.0.nar"
-    into "${nifiHome}/extensions"
+//A better copy to multiple locations and multiple files
+def deployTargets = ["${nifiExtensions}","$fakeNexus"]
+def narFile = copySpec{from "${buildDir}/libs/" include "CustomNifi*.nar"}
+task deploy (dependsOn: nar) {
+    deployTargets.each { dest ->
+        copy{
+            with narFile
+            into dest
+        }
+    }
 }
-
 group 'org.brandon.nifi.test'
 version '1.0.0'
 sourceCompatibility = 1.8
