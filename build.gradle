@@ -45,7 +45,7 @@ dependencies {
     //all external nifi deps live here to make the
     //processor run
     //This will add the http post and the pojo to the nar
-    compile fileTree("${nifiDepHome}")
+    compile fileTree("${nifiHTTPHome}/HttpClient-1.0.1.jar")
 
 
     //nifi (compile will package everything up into the nar)
@@ -73,5 +73,5 @@ task deploy (dependsOn: nar) {
     }
 }
 group 'org.brandon.nifi.test'
-version '1.0.0'
+version '1.0.1'
 sourceCompatibility = 1.8
