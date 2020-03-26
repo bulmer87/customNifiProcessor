@@ -61,7 +61,7 @@ dependencies {
 }
 //a custom task to copy a directory or file into another dir. This destination does not have to be existent
 task copy(type: Copy, group: "Custom", description: "Copies the nar file crated into the lib dir of nifi"){
-    from "build/libs/CustomNifi-1.0-SNAPSHOT.jar"
+    from "build/libs/CustomNifi-1.0-SNAPSHOT.nar"
     into "${nifiHome}/lib"
 }
 

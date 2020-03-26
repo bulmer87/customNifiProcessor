@@ -47,18 +47,12 @@ import org.apache.nifi.processor.ProcessContext;
 import org.apache.nifi.processor.ProcessSession;
 import org.apache.nifi.processor.ProcessorInitializationContext;
 import org.apache.nifi.processor.Relationship;
-import org.apache.nifi.processor.io.InputStreamCallback;
 import org.apache.nifi.processor.util.StandardValidators;
-import org.intellij.lang.annotations.Flow;
 
 import javax.xml.bind.*;
 import javax.xml.transform.stream.StreamSource;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Field;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -85,7 +79,7 @@ public class TestProcessorOne extends AbstractProcessor {
     //@TODO find a way to add external classpath to nifi without nar file delivery or making the user input that path
     PropertyDescriptor EXTERNAL_RESOURCE_DIRECTORY = new PropertyDescriptor.Builder()
             .name("Extra Resource Directory")
-            .description("This is the external dependencies to directory to make this processor execute in execution")
+            .description("This is the external dependencies directory to make this processor execute in operations")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
             .expressionLanguageSupported(true)
             .dynamicallyModifiesClasspath(true)
@@ -168,6 +162,10 @@ public class TestProcessorOne extends AbstractProcessor {
                 sendToFailure(flowFile,session);
                 throw new ProcessException("TestProcessorOne has thrown a unmarshal exception " + unmarshallE.toString());
             }
+            finally
+            {
+                session.commit();
+            }
             //now process the AttributePojo
             if(attributePojo != null)
             {
@@ -181,15 +179,19 @@ public class TestProcessorOne extends AbstractProcessor {
                     sendToFailure(flowFile,session);
                     throw new ProcessException("TestProcessorOne has thrown a Unsupported Encoding Exception " + e.toString());
                 }
+                finally
+                {
+                    session.commit();
+                }
                 //now that we have the correct payload we need to send this to a socket processor to send this out
                 //but first a new flow file to store the payload and then write the byte array to the flow file
-                FlowFile newff = session.get();
-                writeContents(apBytes,newff,session);
-                sendToSuccess(newff,session);
+                writeContents(apBytes,flowFile,session);
+                sendToSuccess(flowFile,session);
             }
             else
             {
                 sendToFailure(flowFile,session);
+                session.commit();
                 throw new ProcessException("The unmarshalled pojo object is null after processing the flow file xml" +
                         " with id: " + flowFile.getId());
             }
@@ -242,6 +244,7 @@ public class TestProcessorOne extends AbstractProcessor {
      * @param ff
      * @param session
      * Quick function to write the Pojo byte contents to a flow file
+     * This will also emit a provenance report of contents modified
      */
     private void writeContents(byte[] writeArray, FlowFile ff ,final ProcessSession session)
     {
@@ -250,6 +253,8 @@ public class TestProcessorOne extends AbstractProcessor {
             out.write(writeArray);
             out.flush();
         });
+        session.getProvenanceReporter().modifyContent(ff, "Flow File: " + ff.getId() + " contents were " +
+                "modified to add an attribute pojo payload");
     }
 
     /**
@@ -257,10 +262,13 @@ public class TestProcessorOne extends AbstractProcessor {
      * @param ff
      * @param session
      * A helper to send the flow file to the failure relationship
+     * and will emit a provenance report on the route to failure
      */
     private void sendToFailure(FlowFile ff, ProcessSession session)
     {
         session.transfer(ff,FAILURE);
+        session.getProvenanceReporter().route(ff,FAILURE,"Flow File: " + ff.getId() + " routed to " +
+                "testProcessorOne failure relationship");
     }
 
     /**
@@ -268,10 +276,13 @@ public class TestProcessorOne extends AbstractProcessor {
      * @param ff
      * @param session
      * A helper to send the newly created flow file to the success relationship
+     * and will emit a provenance route report to success
      */
     private void sendToSuccess(FlowFile ff, ProcessSession session)
     {
         session.transfer(ff,SUCCESS);
+        session.getProvenanceReporter().route(ff,SUCCESS,"Flow File: " + ff.getId() + " routed to " +
+                "testProcessorOne failure relationship");
     }
 
     /**
