@@ -44,15 +44,17 @@ dependencies {
     //jaxb and attribute pojo for nifi
     //all external nifi deps live here to make the
     //processor run
-    compileOnly fileTree("${nifiDepHome}")
+    //This will add the http post and the pojo to the nar
+    compile fileTree("${nifiDepHome}")
 
 
-    //nifi
+    //nifi (compile will package everything up into the nar)
     compile 'org.apache.nifi:nifi-api:1.11.3'
     compile 'org.apache.nifi:nifi-processor-utils:1.11.3'
-    implementation 'org.apache.nifi:nifi-ssl-context-service-api:1.11.3'
+    compile 'org.apache.nifi:nifi-ssl-context-service-api:1.11.3'
     //at the root level the nar dependency is stated below
     //the root nar needs to always be dependent on the standard services
+    //only one nar dep per nar file
     nar 'org.apache.nifi:nifi-standard-services-api-nar:1.11.3'
 
     //test
@@ -61,10 +63,12 @@ dependencies {
 }
 //a custom task to copy a directory or file into another dir. This destination does not have to be existent
 task copy(type: Copy, group: "Custom", description: "Copies the nar file crated into the lib dir of nifi"){
-    from "build/libs/CustomNifi-1.0-SNAPSHOT.nar"
-    into "${nifiHome}/lib"
+    //ok 2 birds one stone make it depend on nar so that it will build it all and then copy into delivery dir
+    dependsOn nar
+    from "build/libs/CustomNifi-1.0.0.nar"
+    into "${nifiHome}/extensions"
 }
 
 group 'org.brandon.nifi.test'
-version '1.0-SNAPSHOT'
+version '1.0.0'
 sourceCompatibility = 1.8

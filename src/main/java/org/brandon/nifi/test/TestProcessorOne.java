@@ -32,7 +32,6 @@ import classes.AttributePojo;
 import org.apache.commons.io.IOUtils;
 import org.apache.nifi.annotation.lifecycle.OnAdded;
 import org.apache.nifi.components.PropertyDescriptor;
-import org.apache.nifi.components.Validator;
 import org.apache.nifi.flowfile.FlowFile;
 import org.apache.nifi.annotation.behavior.ReadsAttribute;
 import org.apache.nifi.annotation.behavior.ReadsAttributes;
@@ -119,7 +118,7 @@ public class TestProcessorOne extends AbstractProcessor {
     }
 
     @OnAdded
-    private void initUmarshaller() throws ClassNotFoundException, JAXBException
+    public void initUmarshaller() throws ClassNotFoundException, JAXBException
     {
         Class clazz = Class.forName(myClassName);
         myUnmarshaller = getJAXBUnMarshaller(clazz);
@@ -132,13 +131,16 @@ public class TestProcessorOne extends AbstractProcessor {
 
     @Override
     public final List<PropertyDescriptor> getSupportedPropertyDescriptors() {
-        return descriptors;
+        return this.descriptors;
     }
 
     @OnScheduled
-    public void onScheduled(final ProcessContext context)
+    public void onScheduled(final ProcessContext context) throws ClassNotFoundException, JAXBException
     {
-
+        if(myUnmarshaller == null)
+        {
+            initUmarshaller();
+        }
     }
 
     @Override
@@ -157,14 +159,11 @@ public class TestProcessorOne extends AbstractProcessor {
                 JAXBElement<AttributePojo> ap = myUnmarshaller.unmarshal(streamSource,AttributePojo.class);
                 attributePojo = (AttributePojo) ap.getValue();
             }
-            catch(JAXBException unmarshallE)
+            catch(JAXBException e)
             {
                 sendToFailure(flowFile,session);
-                throw new ProcessException("TestProcessorOne has thrown a unmarshal exception " + unmarshallE.toString());
-            }
-            finally
-            {
                 session.commit();
+                throw new ProcessException("TestProcessorOne has thrown a unmarshal exception " + e.toString());
             }
             //now process the AttributePojo
             if(attributePojo != null)
@@ -177,11 +176,8 @@ public class TestProcessorOne extends AbstractProcessor {
                 catch (UnsupportedEncodingException e)
                 {
                     sendToFailure(flowFile,session);
-                    throw new ProcessException("TestProcessorOne has thrown a Unsupported Encoding Exception " + e.toString());
-                }
-                finally
-                {
                     session.commit();
+                    throw new ProcessException("TestProcessorOne has thrown a Unsupported Encoding Exception " + e.toString());
                 }
                 //now that we have the correct payload we need to send this to a socket processor to send this out
                 //but first a new flow file to store the payload and then write the byte array to the flow file
@@ -196,10 +192,6 @@ public class TestProcessorOne extends AbstractProcessor {
                         " with id: " + flowFile.getId());
             }
 
-        }
-        else
-        {
-            throw new ProcessException("The flow file for processing was a null object and will not be processed");
         }
     }
 
