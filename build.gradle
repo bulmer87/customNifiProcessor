@@ -41,11 +41,11 @@ repositories {
 
 //The dependencies of the actual code you are building not the buildscript itself
 dependencies {
-    //jaxb
-    compileOnly fileTree("${jaxbHome}")
+    //jaxb and attribute pojo for nifi
+    //all external nifi deps live here to make the
+    //processor run
+    compileOnly fileTree("${nifiDepHome}")
 
-    //httpPost for jaxb class binding
-    compileOnly fileTree("${httpPostHome}")
 
     //nifi
     compile 'org.apache.nifi:nifi-api:1.11.3'
