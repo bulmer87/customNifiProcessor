@@ -62,7 +62,7 @@ dependencies {
     implementation 'org.jetbrains:annotations:15.0'
 }
 //A better copy to multiple locations and multiple files
-def deployTargets = ["${nifiExtensions}","$fakeNexus"]
+def deployTargets = ["${nifiExtensions}","${fakeNexus}"]
 def narFile = copySpec{from "${buildDir}/libs/" include "CustomNifi*.nar"}
 task deploy (dependsOn: nar) {
     deployTargets.each { dest ->
